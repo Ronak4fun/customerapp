@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ronak Business Hub - Customer Partner Portal</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0284c7">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    /* Mobile-first PWA resets & app feel */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+    /* Hide scrollbars for clean app appearance */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    body {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      overscroll-behavior-y: contain;
+    }
+    .badge-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+    .modal-backdrop {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen pb-20 select-none">
+
+  <!-- ================= TOP APP BAR ================= -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-sky-700 via-sky-800 to-indigo-900 text-white shadow-md">
+    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center border border-white/20 shadow-inner">
+          <i data-lucide="shield-check" class="w-5 h-5 text-amber-300"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight leading-tight flex items-center gap-1.5">
+            Ronak Hub <span id="app-mode-badge" class="text-[10px] bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded font-black tracking-wider uppercase">Client</span>
+          </h1>
+          <p id="header-user-desc" class="text-xs text-sky-200 truncate max-w-[210px]">Maharashtra Surgical Traders (MH)</p>
+        </div>
+      </div>
+      
+      <!-- Right Header Actions -->
+      <div class="flex items-center space-x-1.5">
+        <button id="btn-toggle-notif" onclick="switchTab('notifications')" class="relative p-2 rounded-lg bg-white/10 hover:bg-white/20 transition active:scale-95" title="Notifications">
+          <i data-lucide="bell" class="w-5 h-5 text-white"></i>
+          <span id="header-notif-dot" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-sky-800"></span>
+        </button>
+        <button id="btn-switch-account" onclick="openSwitchAccountModal()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition active:scale-95" title="Switch User or Owner PIN">
+          <i data-lucide="user-cog" class="w-5 h-5 text-amber-300"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= SUB-HEADER: TARGETED ALERT BANNER ================= -->
+  <section id="state-alert-banner" class="max-w-md mx-auto px-3 pt-2.5 hidden">
+    <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 flex items-center justify-between text-amber-900 text-xs shadow-sm">
+      <div class="flex items-center space-x-2">
+        <span class="p-1 bg-amber-500 text-white rounded-md flex-shrink-0">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        </span>
+        <div class="truncate">
+          <span class="font-bold" id="banner-tag">Maharashtra Alert:</span>
+          <span id="banner-text" class="text-slate-700 ml-1">New container arriving JNPT port.</span>
+        </div>
+      </div>
+      <button onclick="switchTab('notifications')" class="font-bold text-sky-700 underline flex-shrink-0 ml-2">View</button>
+    </div>
+  </section>
+
+  <!-- ================= MAIN ROUTE SCREENS CONTAINER ================= -->
+  <main class="max-w-md mx-auto px-3.5 pt-3">
+    
+    <!-- 1. SCREEN: CATALOG & NEW ARRIVALS -->
+    <section id="screen-catalog" class="space-y-3.5">
+      <!-- Search & Filters -->
+      <div class="flex items-center space-x-2">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+          <input id="catalog-search" type="text" placeholder="Search gloves, sizes, specs..." oninput="renderCatalog()"
+            class="w-full pl-9 pr-3 py-2 bg-white rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm">
+        </div>
+        <select id="catalog-filter-cat" onchange="renderCatalog()" class="bg-white border border-slate-200 text-xs font-semibold rounded-xl px-2.5 py-2.5 focus:ring-2 focus:ring-sky-500 shadow-sm text-slate-700">
+          <option value="All">All Items</option>
+          <option value="New Arrival">⭐ New Arrivals</option>
+          <option value="Nitrile">Nitrile Gloves</option>
+          <option value="Latex">Latex Examination</option>
+          <option value="Surgical">Surgical Sterile</option>
+        </select>
+      </div>
+
+      <!-- Quick Category Pills -->
+      <div class="flex space-x-2 overflow-x-auto pb-1 text-xs whitespace-nowrap">
+        <button onclick="setQuickFilter('All')" class="px-3 py-1.5 rounded-full font-bold bg-sky-700 text-white shadow-sm" id="pill-all">All Stock</button>
+        <button onclick="setQuickFilter('New Arrival')" class="px-3 py-1.5 rounded-full font-semibold bg-white text-slate-700 border border-slate-200" id="pill-new">🔥 New Arrivals</button>
+        <button onclick="setQuickFilter('Nitrile')" class="px-3 py-1.5 rounded-full font-semibold bg-white text-slate-700 border border-slate-200" id="pill-nitrile">Nitrile</button>
+        <button onclick="setQuickFilter('Latex')" class="px-3 py-1.5 rounded-full font-semibold bg-white text-slate-700 border border-slate-200" id="pill-latex">Latex</button>
+      </div>
+
+      <!-- Catalog Product Cards Grid -->
+      <div id="catalog-grid" class="space-y-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 2. SCREEN: ORDER CART & CHECKOUT -->
+    <section id="screen-cart" class="hidden space-y-3.5">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between border-b pb-2.5 mb-3 border-slate-100">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Direct Purchase Order</h2>
+            <p class="text-xs text-slate-500">Official order dispatched straight to warehouse</p>
+          </div>
+          <span class="text-xs bg-sky-100 text-sky-800 font-bold px-2.5 py-1 rounded-full" id="cart-item-count">0 Items</span>
+        </div>
+
+        <!-- Cart Items List -->
+        <div id="cart-items-container" class="space-y-3 divide-y divide-slate-100">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div id="cart-empty-msg" class="text-center py-10 space-y-2 hidden">
+          <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+            <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-600">Your order cart is empty</p>
+          <p class="text-xs text-slate-400">Add products from the catalog to build an order.</p>
+          <button onclick="switchTab('catalog')" class="mt-2 text-xs font-bold text-sky-700 bg-sky-50 px-4 py-2 rounded-xl">Browse Catalog</button>
+        </div>
+
+        <!-- Order Specifications Form -->
+        <div id="cart-checkout-section" class="mt-4 pt-3 border-t border-slate-200 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Destination Godown / Delivery Address *</label>
+            <input id="order-destination" type="text" value="Gala 4, APMC Market, Vashi, Navi Mumbai, Maharashtra"
+              class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 bg-slate-50">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Transporter</label>
+              <input id="order-transport" type="text" placeholder="e.g. VRL Logistics, SafeX"
+                class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Urgency</label>
+              <select id="order-priority" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 bg-slate-50">
+                <option value="Normal">Normal Dispatch</option>
+                <option value="Urgent">Urgent / Express</option>
+                <option value="Hold For Pickup">Hold For Self Pickup</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Dispatch Remarks / Instructions</label>
+            <textarea id="order-notes" rows="2" placeholder="e.g. Please pack carton with heavy duty tape..."
+              class="w-full text-xs p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 bg-slate-50"></textarea>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <div class="flex justify-between text-slate-600">
+              <span>Total Estimated Cartons:</span>
+              <span id="cart-total-boxes" class="font-bold text-slate-900">0 Cartons</span>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>Client Tier Pricing:</span>
+              <span class="font-bold text-emerald-600">Tier-1 Wholesale Rate Applied</span>
+            </div>
+          </div>
+
+          <button onclick="submitCustomerOrder()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold rounded-xl shadow-md active:scale-[0.98] transition flex items-center justify-center space-x-2">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>Submit Purchase Order Directly</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SCREEN: PRIVATE DOCUMENT LOCKER (INVOICE & DOCKET) -->
+    <section id="screen-documents" class="hidden space-y-3.5">
+      <div class="bg-gradient-to-br from-slate-900 to-sky-950 text-white p-4 rounded-2xl shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="p-1.5 bg-amber-400 text-slate-950 rounded-lg">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </span>
+            <h2 class="text-sm font-bold tracking-tight">Private Secure Locker</h2>
+          </div>
+          <span class="text-[10px] bg-white/10 text-emerald-300 font-bold px-2 py-0.5 rounded border border-white/10">End-to-End Isolated</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Access your Tax Invoices, Transporter Lorry Receipts (LR / Bilti), and Dispatch Records. Guaranteed 100% private to your company.
+        </p>
+      </div>
+
+      <!-- Filter Locker Tabs -->
+      <div class="flex space-x-1.5 bg-slate-200/80 p-1 rounded-xl text-xs font-bold text-slate-600">
+        <button onclick="filterDocuments('All')" id="doc-tab-all" class="flex-1 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs">All Records</button>
+        <button onclick="filterDocuments('Invoice')" id="doc-tab-inv" class="flex-1 py-1.5 rounded-lg text-slate-600">Tax Invoices</button>
+        <button onclick="filterDocuments('LR Docket')" id="doc-tab-lr" class="flex-1 py-1.5 rounded-lg text-slate-600">LR / Transport</button>
+      </div>
+
+      <!-- Document List Container -->
+      <div id="documents-container" class="space-y-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 4. SCREEN: NOTIFICATIONS & REGIONAL BROADCASTS -->
+    <section id="screen-notifications" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">Broadcast Channel</h2>
+          <p class="text-xs text-slate-500">Official company updates, container arrivals & exhibits</p>
+        </div>
+        <button onclick="markAllNotificationsRead()" class="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg">Mark Read</button>
+      </div>
+
+      <div id="notifications-container" class="space-y-2.5">
+        <!-- Rendered dynamically based on client state and category -->
+      </div>
+    </section>
+
+    <!-- 5. SCREEN: OWNER / ADMIN CONSOLE (PROTECTED) -->
+    <section id="screen-admin" class="hidden space-y-4">
+      <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="p-1.5 bg-purple-500 text-white rounded-lg">
+              <i data-lucide="crown" class="w-4 h-4"></i>
+            </span>
+            <div>
+              <h2 class="text-sm font-bold">Owner Control Console</h2>
+              <p class="text-[11px] text-purple-200">Ronak Healthcare Operations Management</p>
+            </div>
+          </div>
+          <button onclick="exitOwnerMode()" class="text-xs bg-rose-500/80 hover:bg-rose-500 px-2 py-1 rounded font-bold">Exit Mode</button>
+        </div>
+      </div>
+
+      <!-- Admin Sub Tabs -->
+      <div class="flex space-x-1.5 overflow-x-auto text-xs font-bold text-slate-600 bg-white p-1 rounded-xl border border-slate-200">
+        <button onclick="switchAdminTab('broadcast')" id="adm-tab-broadcast" class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700">📣 Broadcast Alert</button>
+        <button onclick="switchAdminTab('upload-doc')" id="adm-tab-upload-doc" class="px-3 py-2 rounded-lg">📤 Upload Invoice/LR</button>
+        <button onclick="switchAdminTab('orders')" id="adm-tab-orders" class="px-3 py-2 rounded-lg">📦 Order Queue (<span id="adm-pending-count">0</span>)</button>
+        <button onclick="switchAdminTab('new-prod')" id="adm-tab-new-prod" class="px-3 py-2 rounded-lg">✨ Add Product</button>
+      </div>
+
+      <!-- ADMIN VIEW 1: TARGETED BROADCAST (ZERO WHATSAPP SPAM) -->
+      <div id="admin-view-broadcast" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Targeted Regional Push Announcement</h3>
+          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">Zero Spam Filter</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Target Customer State *</label>
+          <select id="bc-target-state" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">All India (Nationwide)</option>
+            <option value="MH">Maharashtra Partners Only</option>
+            <option value="GJ">Gujarat Partners Only</option>
+            <option value="DL">Delhi NCR Partners Only</option>
+            <option value="KA">Karnataka Partners Only</option>
+            <option value="TN">Tamil Nadu Partners Only</option>
+          </select>
+          <p class="text-[10px] text-slate-400 mt-1">Partners in other states will never see this notice.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Target Customer Tier</label>
+            <select id="bc-target-tier" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+              <option value="ALL">All Tiers</option>
+              <option value="Wholesaler">Super Wholesalers Only</option>
+              <option value="Distributor">Regional Distributors</option>
+              <option value="Hospital">Direct Hospital Supply</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Alert Category</label>
+            <select id="bc-type" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+              <option value="Exhibition">🎪 Trade Exhibition / Expo</option>
+              <option value="Arrival">🚢 New Container Arrival</option>
+              <option value="PriceDrop">💰 Special Volume Discount</option>
+              <option value="StockNotice">⚠️ Stock Clearance</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Broadcast Headline *</label>
+          <input id="bc-title" type="text" placeholder="e.g. Visit our Booth #B14 at Medical Fair India Mumbai"
+            class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Detailed Message / Location / Offer Details *</label>
+          <textarea id="bc-msg" rows="3" placeholder="Enter complete venue, date, or pricing terms..."
+            class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <button onclick="publishTargetedBroadcast()" class="w-full py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition flex items-center justify-center space-x-1.5">
+          <i data-lucide="radio" class="w-4 h-4"></i>
+          <span>Send Filtered Broadcast Now</span>
+        </button>
+      </div>
+
+      <!-- ADMIN VIEW 2: UPLOAD INVOICE & LR DOCKET COPY -->
+      <div id="admin-view-upload-doc" class="hidden bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Assign Invoice or LR Transport Docket</h3>
+          <span class="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded">Client Isolated</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Select Specific Customer *</label>
+          <select id="doc-customer-select" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-sky-500">
+            <!-- Populated via JS -->
+          </select>
+          <p class="text-[10px] text-slate-400 mt-0.5">Only this client will be granted access to this document.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Document Type *</label>
+            <select id="doc-type" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+              <option value="Invoice">GST Tax Invoice</option>
+              <option value="LR Docket">Transport Bilti / LR Docket</option>
+              <option value="Packing List">Packing Slip & Weight Sheet</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Document / Invoice / LR No *</label>
+            <input id="doc-ref-no" type="text" placeholder="e.g. INV-2026-8812 or VRL-90812"
+              class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Transporter / CHA Name</label>
+            <input id="doc-transporter" type="text" placeholder="e.g. VRL, TCI, SafeXpress"
+              class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Invoice Amount (INR)</label>
+            <input id="doc-amount" type="number" placeholder="₹ Value"
+              class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Select Document Copy (PDF / Scan / Photo) *</label>
+          <input id="doc-file-input" type="file" accept="image/*,application/pdf"
+            class="w-full text-xs p-2 rounded-xl border border-slate-200 bg-slate-50 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-100 file:text-sky-800">
+        </div>
+
+        <button onclick="saveDocumentToLocker()" class="w-full py-2.5 bg-sky-700 hover:bg-sky-800 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition flex items-center justify-center space-x-1.5">
+          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          <span>Securely Post to Customer Locker</span>
+        </button>
+      </div>
+
+      <!-- ADMIN VIEW 3: INCOMING ORDER QUEUE -->
+      <div id="admin-view-orders" class="hidden bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Submitted Partner Purchase Orders</h3>
+          <span class="text-xs text-slate-500">Real-time sync</span>
+        </div>
+        <div id="admin-orders-list" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- ADMIN VIEW 4: ADD NEW PRODUCT & SPECIFICATIONS -->
+      <div id="admin-view-new-prod" class="hidden bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Publish New Product / Container Lot</h3>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Product Code & Name *</label>
+          <input id="prod-name" type="text" placeholder="e.g. Nitrile Blue Examination Gloves (3.5g Powder Free)"
+            class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+            <select id="prod-category" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+              <option value="Nitrile">Nitrile Gloves</option>
+              <option value="Latex">Latex Examination</option>
+              <option value="Surgical">Surgical Sterile</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Wholesale Rate / Carton (₹)</label>
+            <input id="prod-price" type="number" placeholder="2450"
+              class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Technical Specs (Thickness, Material, Standard)</label>
+          <input id="prod-specs" type="text" placeholder="e.g. 100 pcs/dispenser, 10 dispensers/ctn, ASTM D6319, EN 455"
+            class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">YouTube Video Link / Demo</label>
+          <input id="prod-video-url" type="text" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+        </div>
+
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="prod-is-new" class="w-4 h-4 text-sky-600 rounded">
+          <label for="prod-is-new" class="text-xs font-semibold text-slate-700">Flag as "⭐ New Container Arrival"</label>
+        </div>
+
+        <button onclick="saveNewProductCatalog()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition flex items-center justify-center space-x-1.5">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Publish to Customer Catalog</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FIXED BOTTOM APP NAVIGATION BAR ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
+    <div class="max-w-md mx-auto grid grid-cols-4 py-2 px-1 text-center">
+      <button onclick="switchTab('catalog')" id="nav-btn-catalog" class="flex flex-col items-center justify-center space-y-0.5 text-sky-700">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        <span class="text-[11px] font-bold">Catalog</span>
+      </button>
+
+      <button onclick="switchTab('cart')" id="nav-btn-cart" class="relative flex flex-col items-center justify-center space-y-0.5 text-slate-500">
+        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+        <span class="text-[11px] font-semibold">Orders</span>
+        <span id="nav-cart-badge" class="hidden absolute top-0 right-5 w-4 h-4 bg-emerald-600 text-white text-[9px] font-black rounded-full flex items-center justify-center">0</span>
+      </button>
+
+      <button onclick="switchTab('documents')" id="nav-btn-documents" class="flex flex-col items-center justify-center space-y-0.5 text-slate-500">
+        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+        <span class="text-[11px] font-semibold">Locker</span>
+      </button>
+
+      <button onclick="switchTab('notifications')" id="nav-btn-notifications" class="relative flex flex-col items-center justify-center space-y-0.5 text-slate-500">
+        <i data-lucide="bell" class="w-5 h-5"></i>
+        <span class="text-[11px] font-semibold">Alerts</span>
+        <span id="nav-notif-badge" class="absolute top-0 right-5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= MODAL: VIDEO PLAYER ================= -->
+  <div id="modal-video" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-800">
+      <div class="p-3 bg-slate-950 flex items-center justify-between text-white border-b border-slate-800">
+        <h4 id="video-modal-title" class="text-xs font-bold truncate">Product Demonstration</h4>
+        <button onclick="closeVideoModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="aspect-video w-full bg-black flex items-center justify-center" id="video-container">
+        <!-- Iframe or player inserted dynamically -->
+      </div>
+      <div class="p-3 bg-slate-900 text-center">
+        <button onclick="closeVideoModal()" class="text-xs bg-slate-800 text-slate-200 px-4 py-2 rounded-xl font-bold">Close Video</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: SWITCH ACCOUNT / OWNER PIN ================= -->
+  <div id="modal-switch-account" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100 p-4 space-y-3.5">
+      <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900">Switch Customer Account</h3>
+        <button onclick="closeSwitchAccountModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quick Switch Demo Customer -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Select Customer Account (Simulate Login)</label>
+        <div id="account-switch-list" class="space-y-1.5 max-h-48 overflow-y-auto">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+
+      <!-- Owner PIN Authorization -->
+      <div class="pt-2 border-t border-slate-100">
+        <label class="block text-xs font-bold text-purple-900 mb-1 flex items-center gap-1">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-purple-600"></i>
+          Owner / Admin Mode
+        </label>
+        <div class="flex space-x-2">
+          <input id="owner-pin-input" type="password" maxlength="6" placeholder="Enter Owner PIN (1234)"
+            class="flex-1 text-xs p-2.5 rounded-xl border border-purple-200 bg-purple-50 focus:ring-2 focus:ring-purple-500">
+          <button onclick="verifyOwnerPIN()" class="px-3.5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-xl shadow">Unlock</button>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1">Default PIN for testing is <span class="font-bold text-purple-600">1234</span>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: DOCUMENT VIEWER / DOWNLOAD CONFIRMATION ================= -->
+  <div id="modal-doc-viewer" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 p-4 space-y-3">
+      <div class="flex items-center justify-between border-b pb-2 border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="p-1.5 bg-sky-100 text-sky-800 rounded-lg">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+          </span>
+          <div>
+            <h4 id="doc-modal-type" class="text-xs font-bold text-slate-900">Tax Invoice</h4>
+            <p id="doc-modal-ref" class="text-[11px] text-slate-500">INV-2026-9041</p>
+          </div>
+        </div>
+        <button onclick="closeDocViewerModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Transporter:</span>
+          <span id="doc-modal-transporter" class="font-bold text-slate-800">VRL Logistics</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Dispatch Date:</span>
+          <span id="doc-modal-date" class="font-bold text-slate-800">24 Oct 2026</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Invoice Amount:</span>
+          <span id="doc-modal-amt" class="font-bold text-emerald-600">₹2,45,000.00</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Security:</span>
+          <span class="text-slate-700 font-semibold">🔒 Restricted to your GSTIN</span>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-sky-50 border border-sky-100 text-center">
+        <i data-lucide="shield-check" class="w-8 h-8 mx-auto text-sky-600 mb-1"></i>
+        <p class="text-xs font-bold text-sky-900">Official Document Verified</p>
+        <p class="text-[11px] text-sky-700">Stored safely on Cloud Storage.</p>
+      </div>
+
+      <div class="flex space-x-2">
+        <button onclick="triggerMockDownload()" class="flex-1 py-2.5 bg-sky-700 hover:bg-sky-800 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition flex items-center justify-center space-x-1.5">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Download PDF Copy</span>
+        </button>
+        <button onclick="closeDocViewerModal()" class="px-3.5 py-2.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ENGINE ================= -->
+  <script>
+    // --- 1. MOCK DATABASE (IN-MEMORY WITH LOCAL STORAGE BACKUP) ---
+    const DB = {
+      customers: [
+        { id: "CUST-MH-01", name: "Maharashtra Surgical Traders", state: "MH", tier: "Wholesaler", city: "Mumbai", gstin: "27AABCR9912C1Z5" },
+        { id: "CUST-GJ-02", name: "Gujarat Medico Lifecare", state: "GJ", tier: "Distributor", city: "Ahmedabad", gstin: "24AAECG8810M1Z2" },
+        { id: "CUST-DL-03", name: "Delhi Capital Healthcare", state: "DL", tier: "Wholesaler", city: "New Delhi", gstin: "07AAJCR1234D1ZP" },
+        { id: "CUST-KA-04", name: "Bangalore Surgicals Hub", state: "KA", tier: "Distributor", city: "Bengaluru", gstin: "29AABCS5511K1Z0" }
+      ],
+      products: [
+        {
+          id: "PROD-NIT-BL-01",
+          name: "Nitrile Examination Gloves (Blue)",
+          category: "Nitrile",
+          isNew: true,
+          specs: "3.5g Powder-Free | ASTM D6319 & EN 455 | 100 pcs/box, 10 boxes/carton",
+          sizes: ["S", "M", "L", "XL"],
+          pricePerCarton: 2450,
+          videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+          image: "https://images.unsplash.com/photo-1584744982491-665216d95f8b?auto=format&fit=crop&w=500&q=80",
+          inStock: true
+        },
+        {
+          id: "PROD-NIT-BK-02",
+          name: "Nitrile Heavy-Duty Black Tattoo/Industrial",
+          category: "Nitrile",
+          isNew: true,
+          specs: "5.0g Diamond Textured Grip | Chemical Resistant | 100 pcs/box",
+          sizes: ["M", "L", "XL"],
+          pricePerCarton: 3200,
+          videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+          image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=500&q=80",
+          inStock: true
+        },
+        {
+          id: "PROD-LAT-PF-03",
+          name: "Latex High-Risk Examination Gloves (Powder Free)",
+          category: "Latex",
+          isNew: false,
+          specs: "Pure Natural Rubber | Polymer Coated | Beaded Cuff | 10 boxes/carton",
+          sizes: ["S", "M", "L"],
+          pricePerCarton: 2150,
+          videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+          image: "https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=500&q=80",
+          inStock: true
+        },
+        {
+          id: "PROD-SUR-ST-04",
+          name: "Surgical Sterile Gloves Pre-Powdered Pairs",
+          category: "Surgical",
+          isNew: false,
+          specs: "Curved Fingers | Gamma Sterilized | 50 Pairs/box, 8 boxes/carton",
+          sizes: ["6.5", "7.0", "7.5", "8.0"],
+          pricePerCarton: 3800,
+          videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+          image: "https://images.unsplash.com/photo-1584744982491-665216d95f8b?auto=format&fit=crop&w=500&q=80",
+          inStock: true
+        }
+      ],
+      // PRIVATE DOCUMENTS - Strictly filtered by customerId
+      documents: [
+        {
+          id: "DOC-101",
+          customerId: "CUST-MH-01",
+          type: "Invoice",
+          refNo: "INV-2026-9041",
+          transporter: "VRL Logistics",
+          amount: 245000,
+          date: "2026-10-24",
+          lrNo: "VRL-BOM-883912",
+          fileUrl: "#",
+          isPaid: true
+        },
+        {
+          id: "DOC-102",
+          customerId: "CUST-MH-01",
+          type: "LR Docket",
+          refNo: "LR-VRL-BOM-883912",
+          transporter: "VRL Logistics (Bhiwandi Hub)",
+          amount: 4200,
+          date: "2026-10-24",
+          lrNo: "VRL-BOM-883912",
+          fileUrl: "#",
+          isPaid: true
+        },
+        {
+          id: "DOC-103",
+          customerId: "CUST-GJ-02",
+          type: "Invoice",
+          refNo: "INV-2026-8910",
+          transporter: "SafeXpress",
+          amount: 182000,
+          date: "2026-10-21",
+          lrNo: "SFX-AHM-11209",
+          fileUrl: "#",
+          isPaid: false
+        },
+        {
+          id: "DOC-104",
+          customerId: "CUST-DL-03",
+          type: "Invoice",
+          refNo: "INV-2026-8740",
+          transporter: "TCI Freight",
+          amount: 310000,
+          date: "2026-10-18",
+          lrNo: "TCI-DEL-9941",
+          fileUrl: "#",
+          isPaid: true
+        }
+      ],
+      // TARGETED BROADCAST NOTIFICATIONS
+      notifications: [
+        {
+          id: "NOTIF-01",
+          targetState: "MH",
+          targetTier: "ALL",
+          type: "Exhibition",
+          title: "🎪 Visit Our Booth at Medical Fair India (Nesco Mumbai)",
+          message: "Exclusive pass for Maharashtra distributors. We will showcase our latest 3.5g Nitrile batches at Hall 1, Booth B-22, Nesco Goregaon (Nov 10-12). Free passes waiting!",
+          date: "25 Oct 2026",
+          read: false
+        },
+        {
+          id: "NOTIF-02",
+          targetState: "ALL",
+          targetTier: "ALL",
+          type: "Arrival",
+          title: "🚢 Malaysia 40ft High-Cube Container Discharged at Port",
+          message: "Fresh batch of Nitrile Blue (Sizes S, M, L) cleared customs. Dispatch available on first-confirmed purchase order basis.",
+          date: "24 Oct 2026",
+          read: false
+        },
+        {
+          id: "NOTIF-03",
+          targetState: "GJ",
+          targetTier: "ALL",
+          type: "PriceDrop",
+          title: "💰 Gujarat Godown Direct Delivery Discount",
+          message: "Special ₹80/carton freight subsidy for deliveries in Ahmedabad, Surat, and Rajkot for orders above 50 cartons.",
+          date: "22 Oct 2026",
+          read: false
+        }
+      ],
+      orders: [
+        {
+          id: "ORD-9901",
+          customerId: "CUST-MH-01",
+          customerName: "Maharashtra Surgical Traders",
+          items: [{ name: "Nitrile Examination Gloves (Blue)", qty: 25, size: "M" }],
+          totalBoxes: 25,
+          destination: "Gala 4, APMC Market, Vashi, Navi Mumbai",
+          date: "2026-10-24",
+          status: "Dispatched",
+          lrNumber: "VRL-BOM-883912"
+        }
+      ]
+    };
+
+    // --- 2. SESSION STATE ---
+    let currentCustomerId = "CUST-MH-01";
+    let isOwnerMode = false;
+    let activeTab = "catalog";
+    let activeQuickFilter = "All";
+    let activeDocFilter = "All";
+    let cart = {}; // { prodId_size: { product, size, qty } }
+
+    // --- 3. INITIALIZATION ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadStoredData();
+      renderAppHeader();
+      renderCatalog();
+      renderDocuments();
+      renderNotifications();
+      renderCartUI();
+      populateCustomerDropdowns();
+      lucide.createIcons();
+    });
+
+    function loadStoredData() {
+      const savedDocs = localStorage.getItem("ronak_hub_docs");
+      if (savedDocs) DB.documents = JSON.parse(savedDocs);
+      const savedNotifs = localStorage.getItem("ronak_hub_notifs");
+      if (savedNotifs) DB.notifications = JSON.parse(savedNotifs);
+      const savedOrders = localStorage.getItem("ronak_hub_orders");
+      if (savedOrders) DB.orders = JSON.parse(savedOrders);
+      const savedProds = localStorage.getItem("ronak_hub_prods");
+      if (savedProds) DB.products = JSON.parse(savedProds);
+    }
+
+    function saveStoredData() {
+      localStorage.setItem("ronak_hub_docs", JSON.stringify(DB.documents));
+      localStorage.setItem("ronak_hub_notifs", JSON.stringify(DB.notifications));
+      localStorage.setItem("ronak_hub_orders", JSON.stringify(DB.orders));
+      localStorage.setItem("ronak_hub_prods", JSON.stringify(DB.products));
+    }
+
+    // --- 4. NAVIGATION & TAB SWITCHING ---
+    function switchTab(tabId) {
+      activeTab = tabId;
+      const screens = ["catalog", "cart", "documents", "notifications", "admin"];
+      screens.forEach(s => {
+        const el = document.getElementById(`screen-${s}`);
+        if (el) el.classList.toggle("hidden", s !== tabId);
+      });
+
+      // Update Nav Bar highlights
+      ["catalog", "cart", "documents", "notifications"].forEach(nav => {
+        const btn = document.getElementById(`nav-btn-${nav}`);
+        if (btn) {
+          if (nav === tabId) {
+            btn.classList.add("text-sky-700");
+            btn.classList.remove("text-slate-500");
+          } else {
+            btn.classList.remove("text-sky-700");
+            btn.classList.add("text-slate-500");
+          }
+        }
+      });
+
+      window.scrollTo(0, 0);
+      lucide.createIcons();
+    }
+
+    // --- 5. CLIENT CONTEXT & DEMO USER SWITCHER ---
+    function getLoggedInCustomer() {
+      return DB.customers.find(c => c.id === currentCustomerId) || DB.customers[0];
+    }
+
+    function renderAppHeader() {
+      const cust = getLoggedInCustomer();
+      const badge = document.getElementById("app-mode-badge");
+      const desc = document.getElementById("header-user-desc");
+      const banner = document.getElementById("state-alert-banner");
+
+      if (isOwnerMode) {
+        badge.innerText = "OWNER MODE";
+        badge.className = "text-[10px] bg-purple-400 text-purple-950 px-1.5 py-0.5 rounded font-black tracking-wider uppercase";
+        desc.innerText = "Full Master Access (All States & Lockers)";
+        banner.classList.add("hidden");
+      } else {
+        badge.innerText = "CLIENT";
+        badge.className = "text-[10px] bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded font-black tracking-wider uppercase";
+        desc.innerText = `${cust.name} (${cust.state})`;
+
+        // Check for state targeted notices
+        const stateAlert = DB.notifications.find(n => n.targetState === cust.state);
+        if (stateAlert) {
+          banner.classList.remove("hidden");
+          document.getElementById("banner-tag").innerText = `${cust.state} Notice:`;
+          document.getElementById("banner-text").innerText = stateAlert.title;
+        } else {
+          banner.classList.add("hidden");
+        }
+      }
+    }
+
+    function openSwitchAccountModal() {
+      const list = document.getElementById("account-switch-list");
+      list.innerHTML = DB.customers.map(c => `
+        <div onclick="selectCustomerAccount('${c.id}')" class="p-2.5 rounded-xl border ${c.id === currentCustomerId ? 'border-sky-500 bg-sky-50/70' : 'border-slate-200 bg-white'} flex items-center justify-between cursor-pointer active:scale-95 transition">
+          <div>
+            <div class="text-xs font-bold text-slate-900">${c.name}</div>
+            <div class="text-[10px] text-slate-500">${c.city}, State: <span class="font-bold text-sky-700">${c.state}</span> | ${c.tier}</div>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded ${c.id === currentCustomerId ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-600'}">
+            ${c.id === currentCustomerId ? 'Active' : 'Select'}
+          </span>
+        </div>
+      `).join("");
+
+      document.getElementById("modal-switch-account").classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function closeSwitchAccountModal() {
+      document.getElementById("modal-switch-account").classList.add("hidden");
+    }
+
+    function selectCustomerAccount(custId) {
+      currentCustomerId = custId;
+      isOwnerMode = false;
+      renderAppHeader();
+      renderDocuments();
+      renderNotifications();
+      renderCatalog();
+      closeSwitchAccountModal();
+      switchTab("catalog");
+    }
+
+    function verifyOwnerPIN() {
+      const pin = document.getElementById("owner-pin-input").value;
+      if (pin === "1234") {
+        isOwnerMode = true;
+        document.getElementById("owner-pin-input").value = "";
+        closeSwitchAccountModal();
+        renderAppHeader();
+        renderDocuments();
+        renderNotifications();
+        populateAdminOrders();
+        switchTab("admin");
+      } else {
+        alert("Incorrect Owner PIN. Default demo PIN is 1234.");
+      }
+    }
+
+    function exitOwnerMode() {
+      isOwnerMode = false;
+      renderAppHeader();
+      switchTab("catalog");
+    }
+
+    // --- 6. PRODUCT CATALOG & VIDEO MODAL ---
+    function setQuickFilter(cat) {
+      activeQuickFilter = cat;
+      document.getElementById("catalog-filter-cat").value = cat;
+      ["all", "new", "nitrile", "latex"].forEach(p => {
+        const el = document.getElementById(`pill-${p}`);
+        if (el) {
+          el.className = (p === cat.toLowerCase() || (cat === 'New Arrival' && p === 'new')) 
+            ? "px-3 py-1.5 rounded-full font-bold bg-sky-700 text-white shadow-sm"
+            : "px-3 py-1.5 rounded-full font-semibold bg-white text-slate-700 border border-slate-200";
+        }
+      });
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const query = (document.getElementById("catalog-search").value || "").toLowerCase();
+      const catFilter = document.getElementById("catalog-filter-cat").value;
+      const grid = document.getElementById("catalog-grid");
+
+      const filtered = DB.products.filter(p => {
+        const matchesQuery = p.name.toLowerCase().includes(query) || p.specs.toLowerCase().includes(query);
+        const matchesCat = (catFilter === "All") || 
+                           (catFilter === "New Arrival" && p.isNew) ||
+                           (p.category === catFilter);
+        return matchesQuery && matchesCat;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
+            <i data-lucide="package-x" class="w-8 h-8 mx-auto text-slate-400"></i>
+            <p class="text-xs font-bold text-slate-700">No products match your search</p>
+            <button onclick="setQuickFilter('All')" class="text-xs text-sky-700 font-bold underline">Reset Filters</button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = filtered.map(prod => `
+        <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-3">
+          <div class="flex space-x-3">
+            <div class="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-100">
+              <img src="${prod.image}" alt="${prod.name}" class="w-full h-full object-cover">
+              ${prod.isNew ? '<span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded shadow">NEW ARRIVAL</span>' : ''}
+            </div>
+
+            <div class="flex-1 min-w-0 space-y-1">
+              <div class="flex items-start justify-between">
+                <span class="text-[10px] font-bold text-sky-700 uppercase tracking-wider">${prod.category}</span>
+                <span class="text-xs font-black text-slate-900">₹${prod.pricePerCarton.toLocaleString()}/ctn</span>
+              </div>
+              <h3 class="text-xs font-bold text-slate-900 leading-snug line-clamp-2">${prod.name}</h3>
+              <p class="text-[11px] text-slate-500 leading-tight">${prod.specs}</p>
+            </div>
+          </div>
+
+          <!-- Video Button & Size Options -->
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button onclick="openVideoModal('${prod.id}')" class="flex items-center space-x-1 text-[11px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg active:scale-95 transition">
+              <i data-lucide="play-circle" class="w-3.5 h-3.5"></i>
+              <span>Watch Demo</span>
+            </button>
+
+            <!-- Size Selector & Quick Add -->
+            <div class="flex items-center space-x-1.5">
+              <select id="size-${prod.id}" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-sky-500">
+                ${prod.sizes.map(s => `<option value="${s}">Size ${s}</option>`).join("")}
+              </select>
+              <button onclick="addToCart('${prod.id}')" class="flex items-center space-x-1 bg-sky-700 hover:bg-sky-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Order</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      lucide.createIcons();
+    }
+
+    function openVideoModal(prodId) {
+      const prod = DB.products.find(p => p.id === prodId);
+      if (!prod) return;
+      document.getElementById("video-modal-title").innerText = `${prod.name} - Official Demo`;
+      
+      const container = document.getElementById("video-container");
+      // Clean YouTube Embedder
+      let embedUrl = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1";
+      if (prod.videoUrl.includes("v=")) {
+        const videoId = prod.videoUrl.split("v=")[1].split("&")[0];
+        embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      }
+      container.innerHTML = `<iframe class="w-full h-full" src="${embedUrl}" title="Product Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      
+      document.getElementById("modal-video").classList.remove("hidden");
+    }
+
+    function closeVideoModal() {
+      document.getElementById("modal-video").classList.add("hidden");
+      document.getElementById("video-container").innerHTML = ""; // Stop video playback
+    }
+
+    // --- 7. CART & ORDER SYSTEM ---
+    function addToCart(prodId) {
+      const prod = DB.products.find(p => p.id === prodId);
+      const sizeEl = document.getElementById(`size-${prodId}`);
+      const size = sizeEl ? sizeEl.value : prod.sizes[0];
+      const cartKey = `${prodId}_${size}`;
+
+      if (!cart[cartKey]) {
+        cart[cartKey] = {
+          prodId: prod.id,
+          name: prod.name,
+          price: prod.pricePerCarton,
+          size: size,
+          qty: 5 // Default 5 cartons wholesale minimum
+        };
+      } else {
+        cart[cartKey].qty += 5;
+      }
+
+      renderCartUI();
+      // Brief feedback badge pulse
+      const badge = document.getElementById("nav-cart-badge");
+      badge.classList.remove("hidden");
+      badge.classList.add("badge-pulse");
+      setTimeout(() => badge.classList.remove("badge-pulse"), 1000);
+    }
+
+    function updateCartQty(key, delta) {
+      if (!cart[key]) return;
+      cart[key].qty += delta;
+      if (cart[key].qty <= 0) {
+        delete cart[key];
+      }
+      renderCartUI();
+    }
+
+    function renderCartUI() {
+      const keys = Object.keys(cart);
+      const container = document.getElementById("cart-items-container");
+      const emptyMsg = document.getElementById("cart-empty-msg");
+      const checkoutSec = document.getElementById("cart-checkout-section");
+      const navBadge = document.getElementById("nav-cart-badge");
+      const countEl = document.getElementById("cart-item-count");
+      const totalBoxesEl = document.getElementById("cart-total-boxes");
+
+      if (keys.length === 0) {
+        container.innerHTML = "";
+        emptyMsg.classList.remove("hidden");
+        checkoutSec.classList.add("hidden");
+        navBadge.classList.add("hidden");
+        countEl.innerText = "0 Items";
+        totalBoxesEl.innerText = "0 Cartons";
+        return;
+      }
+
+      emptyMsg.classList.add("hidden");
+      checkoutSec.classList.remove("hidden");
+      navBadge.classList.remove("hidden");
+      navBadge.innerText = keys.length;
+      countEl.innerText = `${keys.length} Line Items`;
+
+      let totalBoxes = 0;
+      container.innerHTML = keys.map(k => {
+        const item = cart[k];
+        totalBoxes += item.qty;
+        return `
+          <div class="py-2.5 flex items-center justify-between text-xs">
+            <div class="pr-2 min-w-0">
+              <h4 class="font-bold text-slate-900 truncate">${item.name}</h4>
+              <p class="text-slate-500 text-[11px]">Size: <span class="font-bold text-slate-700">${item.size}</span> | ₹${item.price.toLocaleString()}/ctn</p>
+            </div>
+            <div class="flex items-center space-x-2 flex-shrink-0">
+              <div class="flex items-center border border-slate-200 rounded-lg bg-slate-50">
+                <button onclick="updateCartQty('${k}', -5)" class="px-2 py-1 text-slate-600 font-bold active:bg-slate-200">-</button>
+                <span class="px-2 py-1 font-bold text-slate-800 text-xs">${item.qty} ctn</span>
+                <button onclick="updateCartQty('${k}', 5)" class="px-2 py-1 text-slate-600 font-bold active:bg-slate-200">+</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      totalBoxesEl.innerText = `${totalBoxes} Cartons`;
+      lucide.createIcons();
+    }
+
+    function submitCustomerOrder() {
+      const keys = Object.keys(cart);
+      if (keys.length === 0) return;
+      const destination = document.getElementById("order-destination").value.trim();
+      const transporter = document.getElementById("order-transport").value.trim() || "Any Reliable Transporter";
+      const notes = document.getElementById("order-notes").value.trim();
+      const cust = getLoggedInCustomer();
+
+      const items = keys.map(k => cart[k]);
+      const totalBoxes = items.reduce((acc, i) => acc + i.qty, 0);
+
+      const newOrder = {
+        id: `ORD-${Date.now().toString().slice(-4)}`,
+        customerId: cust.id,
+        customerName: cust.name,
+        items: items,
+        totalBoxes: totalBoxes,
+        destination: destination,
+        transporterPreference: transporter,
+        notes: notes,
+        date: new Date().toISOString().split("T")[0],
+        status: "Pending Dispatch Approval"
+      };
+
+      DB.orders.unshift(newOrder);
+      saveStoredData();
+      cart = {};
+      renderCartUI();
+      populateAdminOrders();
+
+      alert(`✅ Purchase Order #${newOrder.id} successfully lodged!\nDispatched to Ronak ERP warehouse queue. You will receive invoice & LR copies in your Private Locker upon truck loading.`);
+      switchTab("catalog");
+    }
+
+    // --- 8. PRIVATE DOCUMENT LOCKER (ISOLATED BY CUSTOMER ID) ---
+    function filterDocuments(type) {
+      activeDocFilter = type;
+      ["all", "inv", "lr"].forEach(t => {
+        const el = document.getElementById(`doc-tab-${t}`);
+        if (el) {
+          el.className = (type === 'All' && t === 'all') || (type === 'Invoice' && t === 'inv') || (type === 'LR Docket' && t === 'lr')
+            ? "flex-1 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs font-bold"
+            : "flex-1 py-1.5 rounded-lg text-slate-600 font-semibold";
+        }
+      });
+      renderDocuments();
+    }
+
+    function renderDocuments() {
+      const container = document.getElementById("documents-container");
+      const loggedCust = getLoggedInCustomer();
+
+      // STRICT ISOLATION LOGIC:
+      // If Owner Mode, can view everything.
+      // If Customer, ONLY see documents matching their specific customerId.
+      let list = DB.documents.filter(d => isOwnerMode || d.customerId === loggedCust.id);
+
+      if (activeDocFilter !== "All") {
+        list = list.filter(d => d.type === activeDocFilter);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
+            <i data-lucide="shield-alert" class="w-8 h-8 mx-auto text-slate-400"></i>
+            <p class="text-xs font-bold text-slate-700">No documents found for your account</p>
+            <p class="text-[11px] text-slate-400">Once your order is billed and loaded on the truck, your Tax Invoice and LR Docket will appear here automatically.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = list.map(doc => {
+        const isInvoice = doc.type === "Invoice";
+        return `
+          <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-2.5">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl ${isInvoice ? 'bg-sky-50 text-sky-700 border border-sky-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}">
+                  <i data-lucide="${isInvoice ? 'file-text' : 'truck'}" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h3 class="text-xs font-bold text-slate-900">${doc.refNo}</h3>
+                  <p class="text-[10px] text-slate-500">${doc.type} • Dated: ${doc.date}</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${doc.isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                ${doc.isPaid ? 'Billed / Cleared' : 'Pending'}
+              </span>
+            </div>
+
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-1">
+              <div class="flex justify-between">
+                <span class="text-slate-500">Transporter / CHA:</span>
+                <span class="font-bold text-slate-800">${doc.transporter}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">LR / Bilti Number:</span>
+                <span class="font-bold font-mono text-sky-800">${doc.lrNo}</span>
+              </div>
+              ${doc.amount ? `
+              <div class="flex justify-between">
+                <span class="text-slate-500">Total Invoice Value:</span>
+                <span class="font-bold text-emerald-600">₹${doc.amount.toLocaleString()}</span>
+              </div>` : ''}
+              ${isOwnerMode ? `
+              <div class="flex justify-between border-t pt-1 mt-1 text-[10px] text-purple-700 font-bold">
+                <span>Assigned Partner:</span>
+                <span>${doc.customerId}</span>
+              </div>` : ''}
+            </div>
+
+            <button onclick="openDocViewerModal('${doc.id}')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition active:scale-95">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span>View & Download Document Copy</span>
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      lucide.createIcons();
+    }
+
+    function openDocViewerModal(docId) {
+      const doc = DB.documents.find(d => d.id === docId);
+      if (!doc) return;
+      document.getElementById("doc-modal-type").innerText = doc.type;
+      document.getElementById("doc-modal-ref").innerText = doc.refNo;
+      document.getElementById("doc-modal-transporter").innerText = doc.transporter;
+      document.getElementById("doc-modal-date").innerText = doc.date;
+      document.getElementById("doc-modal-amt").innerText = doc.amount ? `₹${doc.amount.toLocaleString()}` : "Included in LR";
+      document.getElementById("modal-doc-viewer").classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function closeDocViewerModal() {
+      document.getElementById("modal-doc-viewer").classList.add("hidden");
+    }
+
+    function triggerMockDownload() {
+      alert("📥 Download Started: PDF document downloaded and verified against your private ledger.");
+      closeDocViewerModal();
+    }
+
+    // --- 9. TARGETED BROADCAST NOTIFICATIONS (NO WHATSAPP SPAM) ---
+    function renderNotifications() {
+      const container = document.getElementById("notifications-container");
+      const cust = getLoggedInCustomer();
+
+      // Filter: Show if targeted to 'ALL' OR matches customer's specific State (e.g. MH)
+      const list = DB.notifications.filter(n => isOwnerMode || n.targetState === "ALL" || n.targetState === cust.state);
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6 space-y-1">
+            <i data-lucide="bell-off" class="w-6 h-6 mx-auto text-slate-400"></i>
+            <p class="text-xs font-bold text-slate-600">No new notices for ${cust.state}</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = list.map(n => `
+        <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${n.targetState === 'ALL' ? 'bg-sky-100 text-sky-800' : 'bg-purple-100 text-purple-800'}">
+              ${n.targetState === 'ALL' ? 'All India Notice' : `Exclusive for ${n.targetState} Partners`}
+            </span>
+            <span class="text-[10px] text-slate-400">${n.date}</span>
+          </div>
+          <h3 class="text-xs font-bold text-slate-900 leading-snug">${n.title}</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">${n.message}</p>
+        </div>
+      `).join("");
+
+      lucide.createIcons();
+    }
+
+    function markAllNotificationsRead() {
+      document.getElementById("header-notif-dot").classList.add("hidden");
+      document.getElementById("nav-notif-badge").classList.add("hidden");
+    }
+
+    // --- 10. ADMIN CONSOLE ACTIONS ---
+    function switchAdminTab(subTab) {
+      ["broadcast", "upload-doc", "orders", "new-prod"].forEach(t => {
+        const el = document.getElementById(`admin-view-${t}`);
+        const btn = document.getElementById(`adm-tab-${t}`);
+        if (el) el.classList.toggle("hidden", t !== subTab);
+        if (btn) {
+          if (t === subTab) {
+            btn.className = "px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold";
+          } else {
+            btn.className = "px-3 py-2 rounded-lg text-slate-600";
+          }
+        }
+      });
+      lucide.createIcons();
+    }
+
+    function populateCustomerDropdowns() {
+      const select = document.getElementById("doc-customer-select");
+      if (select) {
+        select.innerHTML = DB.customers.map(c => `
+          <option value="${c.id}">${c.name} (${c.state} - ${c.city})</option>
+        `).join("");
+      }
+    }
+
+    function publishTargetedBroadcast() {
+      const state = document.getElementById("bc-target-state").value;
+      const tier = document.getElementById("bc-target-tier").value;
+      const type = document.getElementById("bc-type").value;
+      const title = document.getElementById("bc-title").value.trim();
+      const msg = document.getElementById("bc-msg").value.trim();
+
+      if (!title || !msg) {
+        alert("Please specify a headline and detailed message.");
+        return;
+      }
+
+      const newNotif = {
+        id: `NOTIF-${Date.now().toString().slice(-4)}`,
+        targetState: state,
+        targetTier: tier,
+        type: type,
+        title: title,
+        message: msg,
+        date: "Today",
+        read: false
+      };
+
+      DB.notifications.unshift(newNotif);
+      saveStoredData();
+      renderNotifications();
+      renderAppHeader();
+
+      document.getElementById("bc-title").value = "";
+      document.getElementById("bc-msg").value = "";
+      alert(`🎯 Targeted Announcement Sent!\nDelivered exclusively to ${state === 'ALL' ? 'All India' : state} clients without triggering WhatsApp spam filters.`);
+      switchAdminTab("broadcast");
+    }
+
+    function saveDocumentToLocker() {
+      const customerId = document.getElementById("doc-customer-select").value;
+      const type = document.getElementById("doc-type").value;
+      const refNo = document.getElementById("doc-ref-no").value.trim();
+      const transporter = document.getElementById("doc-transporter").value.trim() || "Local Logistics";
+      const amount = parseFloat(document.getElementById("doc-amount").value) || 0;
+
+      if (!refNo) {
+        alert("Please enter the Invoice or LR Number.");
+        return;
+      }
+
+      const newDoc = {
+        id: `DOC-${Date.now().toString().slice(-4)}`,
+        customerId: customerId,
+        type: type,
+        refNo: refNo,
+        transporter: transporter,
+        amount: amount,
+        date: new Date().toISOString().split("T")[0],
+        lrNo: refNo,
+        fileUrl: "#",
+        isPaid: true
+      };
+
+      DB.documents.unshift(newDoc);
+      saveStoredData();
+      renderDocuments();
+
+      document.getElementById("doc-ref-no").value = "";
+      document.getElementById("doc-amount").value = "";
+      alert(`🔒 Document assigned!\nOnly customer ${customerId} can view or download this copy.`);
+    }
+
+    function populateAdminOrders() {
+      const container = document.getElementById("admin-orders-list");
+      const countEl = document.getElementById("adm-pending-count");
+      countEl.innerText = DB.orders.length;
+
+      if (DB.orders.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No orders currently pending in queue.</p>`;
+        return;
+      }
+
+      container.innerHTML = DB.orders.map(o => `
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-900">${o.customerName}</span>
+            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">${o.status}</span>
+          </div>
+          <div class="text-slate-600">
+            ${o.items.map(i => `<div>• ${i.name} (Size: ${i.size}) - <b>${i.qty} Cartons</b></div>`).join("")}
+          </div>
+          <div class="text-[10px] text-slate-500">Destination: ${o.destination}</div>
+          <div class="flex space-x-2 pt-1">
+            <button onclick="approveOrder('${o.id}')" class="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-[11px]">Approve & Dispatch</button>
+            <button onclick="cancelOrder('${o.id}')" class="px-3 py-1.5 bg-rose-100 text-rose-700 rounded-lg font-bold text-[11px]">Decline</button>
+          </div>
+        </div>
+      `).join("");
+      lucide.createIcons();
+    }
+
+    function approveOrder(orderId) {
+      const order = DB.orders.find(o => o.id === orderId);
+      if (order) {
+        order.status = "Approved & Dispatched";
+        saveStoredData();
+        populateAdminOrders();
+        alert(`Order #${orderId} marked for dispatch.`);
+      }
+    }
+
+    function cancelOrder(orderId) {
+      DB.orders = DB.orders.filter(o => o.id !== orderId);
+      saveStoredData();
+      populateAdminOrders();
+    }
+
+    function saveNewProductCatalog() {
+      const name = document.getElementById("prod-name").value.trim();
+      const cat = document.getElementById("prod-category").value;
+      const price = parseFloat(document.getElementById("prod-price").value) || 2500;
+      const specs = document.getElementById("prod-specs").value.trim() || "Standard Export Quality";
+      const video = document.getElementById("prod-video-url").value.trim() || "https://www.youtube.com/watch?v=ScMzIvxBSi4";
+      const isNew = document.getElementById("prod-is-new").checked;
+
+      if (!name) {
+        alert("Please provide the Product Name.");
+        return;
+      }
+
+      const newProd = {
+        id: `PROD-${Date.now().toString().slice(-4)}`,
+        name: name,
+        category: cat,
+        isNew: isNew,
+        specs: specs,
+        sizes: ["S", "M", "L", "XL"],
+        pricePerCarton: price,
+        videoUrl: video,
+        image: "https://images.unsplash.com/photo-1584744982491-665216d95f8b?auto=format&fit=crop&w=500&q=80",
+        inStock: true
+      };
+
+      DB.products.unshift(newProd);
+      saveStoredData();
+      renderCatalog();
+
+      document.getElementById("prod-name").value = "";
+      document.getElementById("prod-specs").value = "";
+      alert("✨ New Product published to customer catalog with video demo!");
+      switchTab("catalog");
+    }
+  </script>
+</body>
+</html>
